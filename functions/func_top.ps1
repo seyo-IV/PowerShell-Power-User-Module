@@ -51,7 +51,7 @@ function top {
             if($ProcessList.count -eq $EntryNumber){
             Clear-Host
             $Usage; $ProcessList; $processMemoryUsage | Format-Table;  Write-Host "Memory Usage(MB)" -ForegroundColor Green
-            Write-Host "------------" -ForegroundColor Green
+            Write-Host "---------------" -ForegroundColor Green
             Start-Sleep -Seconds 2
             $ProcessList = $null
             $Usage = $null
@@ -81,7 +81,7 @@ function top {
             if($ProcessList.count -eq $EntryNumber){
             Clear-Host
             $Usage; $ProcessList; $processMemoryUsage | Format-Table;  Write-Host "Memory Usage(MB)" -ForegroundColor Green
-            Write-Host "------------" -ForegroundColor Green
+            Write-Host "---------------" -ForegroundColor Green
             $Memory
             Start-Sleep -Seconds 2
             $ProcessList = $null

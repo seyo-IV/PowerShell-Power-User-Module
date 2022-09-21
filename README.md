@@ -22,3 +22,18 @@ Not even close to the original but stil nice.
 ## fgrep ##
 ![fgrep](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/fgrep.png)
 "f" stand for file, since you only can use that on plain text files and not like the normal grep, where you could filter after executing "ps"(for example).
+
+## find ##
+![fgrep](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/find.png)
+
+## sysinfo ##
+![fgrep](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/sysinfo.png)
+
+## chown ##
+![fgrep](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/chown.png)
+
+## chperm ##
+![fgrep](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/chperm.png)
+
+## wc ##
+![fgrep](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/wc.png)

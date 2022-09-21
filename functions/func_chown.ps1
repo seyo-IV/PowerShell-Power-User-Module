@@ -30,10 +30,14 @@ function chown {
         [string]$Path
         )
         $Acl = Get-Acl $Path
+        Write-Host "[ OLD OWNER ]" -ForegroundColor Green
+        $Acl | Select-Object Owner | Format-List
 
         $Object = New-Object System.Security.Principal.Ntaccount($Name)
 
         $Acl.SetOwner($Object)
 
         $Acl | Set-Acl $Path
+        Write-Host "[ NEW OWNER ]" -ForegroundColor Green
+        $Acl | Select-Object Owner | Format-List
 }

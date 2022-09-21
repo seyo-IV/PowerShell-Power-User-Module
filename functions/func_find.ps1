@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-  Adaptation of the touch command of Linux.
+  Adaptation of the find -f command of Linux.
 .DESCRIPTION
-  Create any kind of files with one command.
-.PARAMETER File
+  Search for any kind of files.
+.PARAMETER Name
   Name of file.
 .PARAMETER Path
-  Path of file.
+  Path where to look for.
 .INPUTS
   None.
 .OUTPUTS
@@ -17,10 +17,10 @@
   Purpose/Change: Initial script development
   
 .EXAMPLE
-  touch file C:\temp
+  find file C:\temp
 #>
 
-function touch {
+function find {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$True)]
@@ -28,5 +28,5 @@ function touch {
         [Parameter(Mandatory=$True)]
         [string]$Path
         )
-        New-Item -ItemType File -Path $Path -Name $Name
+        Get-ChildItem $Path | Where-Object {$_.Name -like "*$Name*"}
 }

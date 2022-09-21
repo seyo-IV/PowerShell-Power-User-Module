@@ -3,8 +3,9 @@
   A try of adaptation of the "id" command from Linux.
 .DESCRIPTION
   Show User/Group infos.
-.PARAMETER Path
+.PARAMETER Name
   Name (Can be "me" or of a local or domain user).
+.PARAMETER Scope
   Scope (Can be Local or AD).
 .INPUTS
   None.

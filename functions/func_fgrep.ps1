@@ -3,8 +3,9 @@
   Adaptation of the grep program from Linux.
 .DESCRIPTION
   Search for pattern in plain text files only.
-.PARAMETER Path
+.PARAMETER Find
   Find, pattern to look for.
+.PARAMETER Path
   Path, where to start searching.
 .INPUTS
   None.

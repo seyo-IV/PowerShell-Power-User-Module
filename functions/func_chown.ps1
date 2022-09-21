@@ -17,10 +17,11 @@
   Purpose/Change: Initial script development
   
 .EXAMPLE
-  touch file C:\temp
+  chown randomlocal C:\temp
+  chown Domain\jon.doe C:\temp
 #>
 
-function touch {
+function chown {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$True)]
@@ -28,5 +29,11 @@ function touch {
         [Parameter(Mandatory=$True)]
         [string]$Path
         )
-        New-Item -ItemType File -Path $Path -Name $Name
+        $Acl = Get-Acl $Path
+
+        $Object = New-Object System.Security.Principal.Ntaccount($Name)
+
+        $Acl.SetOwner($Object)
+
+        $Acl | Set-Acl $Path
 }

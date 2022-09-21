@@ -485,39 +485,73 @@ function top {
       [string]$EntryNumber
       )
       $totalRam = (Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).Sum
+      $elevated = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+        while($true) {
 
-      while($true) {
-    
-        while($ProcessCount -le $EntryNumber){
-        $date = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $cpuTime = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
-        $availMem = (Get-Counter '\Memory\Available MBytes').CounterSamples.CookedValue
-        $Usage = $date + ' > CPU: ' + $cpuTime.ToString("#,0.000") + '%, Avail. Mem.: ' + $availMem.ToString("N0") + 'MB (' + (104857600 * $availMem / $totalRam).ToString("#,0.0") + '%)'
-        
-         # Get Computer Object
-     $CompObject =  Get-WmiObject -Class WIN32_OperatingSystem
-     $Memory = ((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhysicalMemory)*100)/ $CompObject.TotalVisibleMemorySize)
-     
-    
-            
-     
-     $processMemoryUsage = Get-WmiObject WIN32_PROCESS | Sort-Object -Property ws -Descending | Select-Object -First $EntryNumber processname, @{Name="Mem Usage(MB)";Expression={[math]::round($_.ws / 1mb)}}
-    
-    
-          $ProcessList = Get-Process | Sort-Object -Descending CPU | Select-Object -First $EntryNumber
-          Start-Sleep -Seconds 1
-          if($ProcessList.count -eq $EntryNumber){
-          Clear-Host
-          $Usage; $ProcessList; $processMemoryUsage;  Write-Host "Memory usage in Percentage:" $Memory
-          Start-Sleep -Seconds 2
-          $ProcessList = $null
-          $Usage = $null
-          $processMemoryUsage = $Null
-          }
-          }
-    
+  if($elevated){  
+          while($ProcessCount -le $EntryNumber){
+          $date = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          $cpuTime = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
+          $availMem = (Get-Counter '\Memory\Available MBytes').CounterSamples.CookedValue
+          $Usage = $date + ' > CPU: ' + $cpuTime.ToString("#,0.000") + '%, Avail. Mem.: ' + $availMem.ToString("N0") + 'MB (' + (104857600 * $availMem / $totalRam).ToString("#,0.0") + '%)'
+          
+          # Get Computer Object
+      $CompObject =  Get-WmiObject -Class WIN32_OperatingSystem
+      $Memory = ((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhysicalMemory)*100)/ $CompObject.TotalVisibleMemorySize)
+      
+      
+              
+      
+      $processMemoryUsage = Get-WmiObject WIN32_PROCESS | Sort-Object -Property ws -Descending | Select-Object -First $EntryNumber processname, @{Name="Mem Usage(MB)";Expression={[math]::round($_.ws / 1mb)}}
+      
+      
+            $ProcessList = Get-Process -IncludeUserName | Sort-Object -Descending CPU | Select-Object -First $EntryNumber
+            Start-Sleep -Seconds 1
+            if($ProcessList.count -eq $EntryNumber){
+            Clear-Host
+            $Usage; $ProcessList; $processMemoryUsage | Format-Table;  Write-Host "Memory Usage(MB)" -ForegroundColor Green
+            Write-Host "---------------" -ForegroundColor Green
+            Start-Sleep -Seconds 2
+            $ProcessList = $null
+            $Usage = $null
+            $processMemoryUsage = $Null
+            }
+            }
+        }
+        else{
+                    while($ProcessCount -le $EntryNumber){
+          $date = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          $cpuTime = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
+          $availMem = (Get-Counter '\Memory\Available MBytes').CounterSamples.CookedValue
+          $Usage = $date + ' > CPU: ' + $cpuTime.ToString("#,0.000") + '%, Avail. Mem.: ' + $availMem.ToString("N0") + 'MB (' + (104857600 * $availMem / $totalRam).ToString("#,0.0") + '%)'
+          
+          # Get Computer Object
+      $CompObject =  Get-WmiObject -Class WIN32_OperatingSystem
+      $Memory = ((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhysicalMemory)*100)/ $CompObject.TotalVisibleMemorySize)
+      
+      
+              
+      
+      $processMemoryUsage = Get-WmiObject WIN32_PROCESS | Sort-Object -Property ws -Descending | Select-Object -First $EntryNumber processname, @{Name="Mem Usage(MB)";Expression={[math]::round($_.ws / 1mb)}}
+      
+      
+            $ProcessList = Get-Process | Sort-Object -Descending CPU | Select-Object -First $EntryNumber
+            Start-Sleep -Seconds 1
+            if($ProcessList.count -eq $EntryNumber){
+            Clear-Host
+            $Usage; $ProcessList; $processMemoryUsage | Format-Table;  Write-Host "Memory Usage(MB)" -ForegroundColor Green
+            Write-Host "---------------" -ForegroundColor Green
+            $Memory
+            Start-Sleep -Seconds 2
+            $ProcessList = $null
+            $Usage = $null
+            $processMemoryUsage = $Null
+            }
+            }
+        }
       }
 }
+
 
 
 <#

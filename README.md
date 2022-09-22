@@ -25,21 +25,39 @@ Not even close to the original but stil nice.
 
 ## find ##
 ![find](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/find.png)
+It works just like the ```file -f``` command.
 
 ## sysinfo ##
 ![sysinfo](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/sysinfo.png)
+Gather usefull infos of local or remote computer.
 
 ## chown ##
 ![chown](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/chown.png)
+Change owner of file.
 
 ## chperm ##
 ![chperm](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/chperm.png)
+Change NTFS permission on directory or file.
 
-## wc ##
-![wc](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/wc.png)
+## free ##
+![free](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/free.png)
+Just like the ```free``` command on Linux, it shows memory and swap stats.
 
+## diskfree ##
+![diskfree](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/diskfree.png)
+Shows disk/volume information. Just like the ```df -h``` command.
+
+## diskusage ##
+![diskusage](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/diskusage.png)
+Like the ```du``` command on Linux.
 
 ### How to install! ###
 Open PowerShell.
 Type ```$env:PSModulePath -split ';'```
 Choose one of the locations and paste the "Power-User" direcotry there.
+
+Then open a new PowerShell console and type ```Import-Module Power-User```
+
+If you can't import the module for wahtever resaon, try ```Get-Module -ListAvailable``` and look for ```Power-User```.
+
+If nothing works do this ```Import-Module \\Path\to\Power-User```

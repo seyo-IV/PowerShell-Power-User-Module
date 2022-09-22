@@ -37,3 +37,9 @@ Not even close to the original but stil nice.
 
 ## wc ##
 ![wc](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/wc.png)
+
+
+### How to install! ###
+Open PowerShell.
+Type ```$env:PSModulePath -split ';'```
+Choose one of the locations and paste the "Power-User" direcotry there.

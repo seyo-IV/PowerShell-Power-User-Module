@@ -4,7 +4,7 @@ A smal collection of scripts i have used over time which can be nice to have in 
 ### Commands ###
 
 ## perm ##
-![perm](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/fgrep.png)
+![perm](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/perm.png)
 Lists NTFS permissions.
 
 ## id ##
@@ -37,7 +37,7 @@ Change owner of file.
 
 ## chperm ##
 ![chperm](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/chperm.png)
-Change NTFS permission on directory or file.
+Change NTFS permission on directory or file. (Sry no fancy output yet :C)
 
 ## free ##
 ![free](https://github.com/seyo-IV/PowerShell-Power-User-Module/blob/main/images/free.png)

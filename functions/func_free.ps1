@@ -3,7 +3,6 @@
   Output swap and memory usage, size, etc..
 .DESCRIPTION
   Get Swap/Memory stats.
-.PARAMETER 
 .INPUTS
   None.
 .OUTPUTS

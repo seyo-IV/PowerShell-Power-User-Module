@@ -13,7 +13,7 @@
   Purpose/Change: Initial script development
   
 .EXAMPLE
-  touch file C:\temp
+  diskfree
 #>
 
 function diskfree {

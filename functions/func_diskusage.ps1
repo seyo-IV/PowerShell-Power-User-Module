@@ -1,10 +1,12 @@
 <#
 .SYNOPSIS
-  Adaptation of the top program from Linux.
+  Adaptation of the diskusage program from Linux.
 .DESCRIPTION
   Show running processes and Memory.
-.PARAMETER EntryNumber
-  EntryNumber for max Rows to show in screen.
+.PARAMETER Select
+  If single file or directory will be choosen. By default its "All"
+.PARAMETER Path
+  Path to file. By default its the current working direcotry.
 .INPUTS
   None.
 .OUTPUTS
@@ -15,8 +17,8 @@
   Purpose/Change: Initial script development
   
 .EXAMPLE
-  top 20
-  top -EntryNumber 19
+  diskusage
+  diskusage select C:\temp
 #>
 
 function diskusage {

@@ -52,6 +52,8 @@ Shows disk/volume information. Just like the ```df -h``` command.
 Like the ```du``` command on Linux.
 
 ### How to install! ###
+IMPOORTANT! You will need PS Version 7 or higher for the top script to run.
+
 Open PowerShell.
 Type ```$env:PSModulePath -split ';'```
 Choose one of the locations and paste the "Power-User" direcotry there.

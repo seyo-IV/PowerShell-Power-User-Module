@@ -1,6 +1,9 @@
 # Introduction #
 A smal collection of scripts i have used over time which can be nice to have in your toolbelt!
 
+TOP ONLY WORKS ON SYSTEMS WITH ENGLISH!!
+
+
 ### Commands ###
 
 ## perm ##

@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-  Adaptation of the touch command of Linux.
+  Adaptation of the chown command of Linux.
 .DESCRIPTION
-  Create any kind of files with one command.
+  Change ownership easy.
 .PARAMETER File
   Name of file.
 .PARAMETER Path
@@ -556,53 +556,60 @@ function find {
 
 <#
 .SYNOPSIS
-  Output swap and memory usage, size, etc..
+  Output swap and memory usage, size, etc.
 .DESCRIPTION
-  Get Swap/Memory stats.
+  Get Swap/Memory stats for Windows systems using CIM (Common Information Model).
 .INPUTS
   None.
 .OUTPUTS
-  None.
+  Memory and swap statistics.
 .NOTES
-  Version:        1.0
+  Version:        1.3
   Author:         Sergiy Ivanov
-  Purpose/Change: Initial script development
-  
+  Purpose/Change: Improved memory and swap calculation logic using CIM.
+
 .EXAMPLE
   free
 #>
 
 function free {
-    [CmdletBinding()]
-    param()
-        $totalRam = (Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).Sum
-        [int]$totalMem  = $totalRam/1GB
-        $availMem = (Get-Counter '\Memory\Available MBytes').CounterSamples.CookedValue
-        $freeMem  = $availMem/1000
-        [int]$usedMem = $totalMem - $freeMem
-        $swapMem  = Get-WmiObject Win32_PageFileusage | Select-Object *
-        $cacheMem = (Get-Counter '\memory\cache bytes').CounterSamples.CookedValue
-        $usedCache = $cacheMem/1GB
-        $usedCache = [math]::round($usedCache, 2)
-        $totalSwap = $swapMem.AllocatedBaseSize/1000
-        $usedSwap = $swapMem.CurrentUsage
-        $freeSwap = $totalSwap - $usedSwap
+  [CmdletBinding()]
+  param()
 
-        $MemPage = New-Object PSCustomObject -Property @{ 
-          "Total"=$totalMem;
-          "Used"=$usedMem;
-          "Free"=$freeMem;
-          "Cache"=$usedCache;
-          "Class"="RAM";
-        }
-        $SwapPage = New-Object PSCustomObject -Property @{ 
-          "Total"=$totalSwap;
-          "Used"=$usedSwap;
-          "Free"=$freeSwap;
-          "Class"="SWAP";
-        }
-        $MemPage | Select-Object Class, Total, Used, Free, Cache | Format-Table
-        $SwapPage | Select-Object Class, Total, Used, Free | Format-Table
+  # Get physical memory using CIM
+  $physicalMemory = Get-CimInstance Win32_ComputerSystem
+  $totalMem = [math]::round($physicalMemory.TotalPhysicalMemory / 1GB, 2)
+
+  # Get available memory using CIM
+  $availMem = Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty FreePhysicalMemory
+  $freeMem = [math]::round(($availMem / 1024) / 1024, 2)  # Convert from KB to GB
+  [int]$usedMem = $totalMem - $freeMem
+  
+
+  # Get page file (swap) information using CIM
+  $swapMem = Get-CimInstance Win32_PageFileUsage | Select-Object *
+  $totalSwap = [math]::round($swapMem.AllocatedBaseSize / 1024, 2)  # Convert to GB
+  $usedSwap = [math]::round($swapMem.CurrentUsage / 1024, 2)        # Convert to GB
+  $freeSwap = $totalSwap - $usedSwap
+
+  # Prepare output objects for Memory (RAM) and Swap (Pagefile)
+  $MemPage = New-Object PSCustomObject -Property @{
+      "Total" = $totalMem
+      "Used"  = [math]::max(0, $usedMem) # Ensure no negative values
+      "Free"  = [math]::max(0, $freeMem) # Ensure no negative values
+      "Class" = "RAM"
+  }
+
+  $SwapPage = New-Object PSCustomObject -Property @{
+      "Total" = $totalSwap
+      "Used"  = [math]::max(0, $usedSwap) # Ensure no negative values
+      "Free"  = [math]::max(0, $freeSwap) # Ensure no negative values
+      "Class" = "SWAP"
+  }
+
+  # Output results as tables
+  $MemPage | Select-Object Class, Total, Used, Free | Format-Table
+  $SwapPage | Select-Object Class, Total, Used, Free | Format-Table
 }
 
 
@@ -682,6 +689,112 @@ function id {
                     $Groups | Select-Object Name, SamAccountName, Description
             }  
         }
+}
+
+
+
+
+<#
+.SYNOPSIS
+  Adaptation of the touch command of Linux.
+.DESCRIPTION
+  Create any kind of files with one command.
+.PARAMETER File
+  Name of file.
+.PARAMETER Path
+  Path of file.
+.INPUTS
+  None.
+.OUTPUTS
+  None.
+.NOTES
+  Version:        1.0
+  Author:         Sergiy Ivanov
+  Purpose/Change: Initial script development
+  
+.EXAMPLE
+  chown randomlocal C:\temp
+  chown Domain\jon.doe C:\temp
+#>
+
+function netinfo {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory = $false)]
+    [int]$Port,
+    [Parameter(Mandatory = $false)]
+    [string]$ProcessName
+  )
+
+  if ($Port -ne "") {
+    # Get a list of active TCP connections, including Listening and Established states
+    $connections = Get-NetTCPConnection | Where-Object { $_.State -eq 'Listen' -or $_.State -eq 'Established' }
+
+    # If a port is specified, filter the connections
+    if ($Port) {
+      $connections = $connections | Where-Object { $_.LocalPort -eq $Port }
+    }
+  
+    # For each connection, retrieve the process name using the process ID
+    $connections | ForEach-Object {
+      $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
+      [PSCustomObject]@{
+        LocalAddress  = $_.LocalAddress
+        LocalPort     = $_.LocalPort
+        RemoteAddress = $_.RemoteAddress
+        RemotePort    = $_.RemotePort
+        State         = $_.State
+        ProcessName   = if ($proc) { $proc.ProcessName } else { 'Unknown' }
+        ProcessId     = $_.OwningProcess
+      }
+    } | Format-Table -AutoSize
+  }
+
+  if ($ProcessName -ne "") {
+    # Get a list of active TCP connections, including Listening and Established states
+    $connections = Get-NetTCPConnection | Where-Object { $_.State -eq 'Listen' -or $_.State -eq 'Established' }
+
+    # For each connection, retrieve the process name using the process ID
+    $connections = $connections | ForEach-Object {
+      $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
+      [PSCustomObject]@{
+        LocalAddress  = $_.LocalAddress
+        LocalPort     = $_.LocalPort
+        RemoteAddress = $_.RemoteAddress
+        RemotePort    = $_.RemotePort
+        State         = $_.State
+        ProcessName   = if ($proc) { $proc.ProcessName } else { 'Unknown' }
+        ProcessId     = $_.OwningProcess
+      }
+    }
+
+    # Filter by process name if specified
+    if ($ProcessName) {
+      $connections = $connections | Where-Object { $_.ProcessName -like "*$ProcessName*" }
+    }
+
+    # Output the results in table format
+    $connections | Format-Table -AutoSize
+  }
+
+  if (($Port -eq "") -and ($ProcessName -eq "")) {
+    # Get a list of active TCP connections, including Listening and Established states
+    $connections = Get-NetTCPConnection | Where-Object { $_.State -eq 'Listen' -or $_.State -eq 'Established' }
+
+    # For each connection, retrieve the process name using the process ID
+    $connections | ForEach-Object {
+      $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
+      [PSCustomObject]@{
+        LocalAddress  = $_.LocalAddress
+        LocalPort     = $_.LocalPort
+        RemoteAddress = $_.RemoteAddress
+        RemotePort    = $_.RemotePort
+        State         = $_.State
+        ProcessName   = if ($proc) { $proc.ProcessName } else { 'Unknown' }
+        ProcessId     = $_.OwningProcess
+      }
+    } | Format-Table -AutoSize
+  }
 }
 
 
@@ -905,53 +1018,53 @@ function top {
   if($elevated){  
     while($ProcessCount -le $EntryNumber){
       $Time = Get-Uptime
-      $UpTime = "$($Time.Hours)h|$($Time.Minutes)m|$($Time.Seconds)s"
-      $cpuTime = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
-      $availMem = (Get-Counter '\Memory\Available MBytes').CounterSamples.CookedValue
-      $Mem = $availMem.ToString("N0")
-      $Mem = $Mem -split ","
-      $Mem = $Mem[0]
-      $AllMem = $totalRam/1GB
-      $Usage = "Uptime: " + $UpTime + ' > CPU: ' + $cpuTime.ToString("#,0.000") + '% | Avail. Mem.: ' + $availMem.ToString("N0") + 'MB (' + (104857600 * $availMem / $totalRam).ToString("#,0.0") + '%)'                
-  
-        $processMemoryUsage = Get-WmiObject WIN32_PROCESS | Sort-Object -Property ws -Descending | Select-Object -First $EntryNumber processname, @{Name="Mem Usage(MB)";Expression={[math]::round($_.ws / 1mb)}}
-        $CPUBar = $cpuTime
-        $CPUBar = [math]::Round($CPUBar)
-        $MemBar = $AllMem - $Mem
+    $UpTime = "$($Time.Hours)h|$($Time.Minutes)m|$($Time.Seconds)s"
+    $cpuTime = (Get-WmiObject -Query "SELECT LoadPercentage FROM Win32_Processor WHERE DeviceID='CPU0'").LoadPercentage
+    $availMem = (Get-WmiObject -Query "SELECT FreePhysicalMemory FROM Win32_OperatingSystem").FreePhysicalMemory / 1024
+    $Mem = $availMem.ToString("N0")
+    $Mem = $Mem -split ","
+    $Mem = $Mem[0]
+    $AllMem = $totalRam/1GB
+    $Usage = "Uptime: " + $UpTime + ' > CPU: ' + $cpuTime.ToString("#,0.000") + '% | Avail. Mem.: ' + $availMem.ToString("N0") + 'MB (' + (104857600 * $availMem / $totalRam).ToString("#,0.0") + '%)'                
 
-        $ProcessList = Get-Process -IncludeUserName | Sort-Object -Descending CPU | Select-Object -First $EntryNumber
+      $processMemoryUsage = Get-WmiObject WIN32_PROCESS | Sort-Object -Property ws -Descending | Select-Object -First $EntryNumber processname, @{Name="Mem Usage(MB)";Expression={[math]::round($_.ws / 1mb)}}
+      $CPUBar = $cpuTime
+      $CPUBar = [math]::Round($CPUBar)
+      $MemBar = $AllMem - $Mem
 
-        if($ProcessList.count -eq $EntryNumber){
-        Clear-Host
+      $ProcessList = Get-Process -IncludeUserName | Sort-Object -Descending CPU | Select-Object -First $EntryNumber
 
-        $CPUi = 0
-        $CPUx = 0
-        foreach($CPUi in $CPUBar){
-            foreach($CPUx in $CPUi){
-            $NoLoad = " "*(100-$CPUx)
-            $Load = "|"*$CPUx
-            }
-        Write-Host "CPU Load: $CPUBar%" -ForegroundColor Green
-        Write-Host -ForegroundColor Yellow "[ $Load $NoLoad ]" -NoNewline
-        }
-        "`n"
-        $Memi = 0
-        $Memx = 0
-        foreach($Memi in $MemBar){
-            foreach($Memx in $Memi){
-            $NoLoad = " "*(100-$Memx)
-            $Load = "|"*$Memx
-            }
-        Write-Host "Mem Load: $Membar%" -ForegroundColor Green
-        Write-Host -ForegroundColor Yellow "[ $Load $NoLoad ]" -NoNewline
-        }
-        "`n"          
-        $Usage; $ProcessList; $processMemoryUsage | Format-Table
+      if($ProcessList.count -eq $EntryNumber){
+      Clear-Host
+
+      $CPUi = 0
+      $CPUx = 0
+      foreach($CPUi in $CPUBar){
+          foreach($CPUx in $CPUi){
+          $NoLoad = " "*(100-$CPUx)
+          $Load = "|"*$CPUx
+          }
+      Write-Host "CPU Load: $CPUBar%" -ForegroundColor Green
+      Write-Host -ForegroundColor Yellow "[ $Load $NoLoad ]" -NoNewline
+      }
+      "`n"
+      $Memi = 0
+      $Memx = 0
+      foreach($Memi in $MemBar){
+          foreach($Memx in $Memi){
+          $NoLoad = " "*(100-$Memx)
+          $Load = "|"*$Memx
+          }
+      Write-Host "Mem Load: $Membar%" -ForegroundColor Green
+      Write-Host -ForegroundColor Yellow "[ $Load $NoLoad ]" -NoNewline
+      }
+      "`n"          
+      $Usage; $ProcessList; $processMemoryUsage | Format-Table
 
 
-        $ProcessList = $null
-        $Usage = $null
-        $processMemoryUsage = $Null
+      $ProcessList = $null
+      $Usage = $null
+      $processMemoryUsage = $Null
         }
       }
         }
@@ -959,8 +1072,8 @@ function top {
           while($ProcessCount -le $EntryNumber){
             $Time = Get-Uptime
             $UpTime = "$($Time.Hours)h|$($Time.Minutes)m|$($Time.Seconds)s"
-            $cpuTime = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
-            $availMem = (Get-Counter '\Memory\Available MBytes').CounterSamples.CookedValue
+            $cpuTime = (Get-WmiObject -Query "SELECT LoadPercentage FROM Win32_Processor WHERE DeviceID='CPU0'").LoadPercentage
+            $availMem = (Get-WmiObject -Query "SELECT FreePhysicalMemory FROM Win32_OperatingSystem").FreePhysicalMemory / 1024
             $Mem = $availMem.ToString("N0")
             $Mem = $Mem -split ","
             $Mem = $Mem[0]
@@ -971,12 +1084,12 @@ function top {
               $CPUBar = $cpuTime
               $CPUBar = [math]::Round($CPUBar)
               $MemBar = $AllMem - $Mem
-  
+        
               $ProcessList = Get-Process | Sort-Object -Descending CPU | Select-Object -First $EntryNumber
-
+        
               if($ProcessList.count -eq $EntryNumber){
               Clear-Host
-
+        
               $CPUi = 0
               $CPUx = 0
               foreach($CPUi in $CPUBar){
@@ -1000,9 +1113,8 @@ function top {
               }
               "`n"          
               $Usage; $ProcessList; $processMemoryUsage | Format-Table
-  
-
-
+        
+        
               $ProcessList = $null
               $Usage = $null
               $processMemoryUsage = $Null

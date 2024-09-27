@@ -1,78 +1,57 @@
 <#
 .SYNOPSIS
-  Output swap and memory usage, size, etc..
+  Output swap and memory usage, size, etc.
 .DESCRIPTION
-  Get Swap/Memory stats.
+  Get Swap/Memory stats for Windows systems using CIM (Common Information Model).
 .INPUTS
   None.
 .OUTPUTS
-  None.
+  Memory and swap statistics.
 .NOTES
-  Version:        1.0
+  Version:        1.3
   Author:         Sergiy Ivanov
-  Purpose/Change: Initial script development
-  
+  Purpose/Change: Improved memory and swap calculation logic using CIM.
+
 .EXAMPLE
   free
 #>
 
-Function Get-PerformanceCounterLocalName
-{
-  param
-  (
-    [UInt32]
-    $ID,
-	$ComputerName = $env:COMPUTERNAME
-  )
-
-  $code = '[DllImport("pdh.dll", SetLastError=true, CharSet=CharSet.Unicode)] public static extern UInt32 PdhLookupPerfNameByIndex(string szMachineName, uint dwNameIndex, System.Text.StringBuilder szNameBuffer, ref uint pcchNameBufferSize);'
-
-  $Buffer = New-Object System.Text.StringBuilder(1024)
-  [UInt32]$BufferSize = $Buffer.Capacity
-
-  $t = Add-Type -MemberDefinition $code -PassThru -Name PerfCounter -Namespace Utility
-  $rv = $t::PdhLookupPerfNameByIndex($ComputerName, $id, $Buffer, [Ref]$BufferSize)
-
-  if ($rv -eq 0)
-  {
-    $Buffer.ToString().Substring(0, $BufferSize-1)
-  }
-  else
-  {
-    Throw 'Get-PerformanceCounterLocalName : Unable to retrieve localized name. Check computer name and performance counter ID.'
-  }
-}
-
 function free {
-    [CmdletBinding()]
-    param()
-        $totalRam = (Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).Sum
-        [int]$totalMem  = $totalRam/1GB
-        $Memory = Get-PerformanceCounterLocalName 4
-        $availMem = (Get-Counter "\$Memory\Available MBytes").CounterSamples.CookedValue
-        $freeMem  = $availMem/1000
-        [int]$usedMem = $totalMem - $freeMem
-        $swapMem  = Get-WmiObject Win32_PageFileusage | Select-Object *
-        $cacheMem = (Get-Counter "\$Memory\cache bytes").CounterSamples.CookedValue
-        $usedCache = $cacheMem/1GB
-        $usedCache = [math]::round($usedCache, 2)
-        $totalSwap = $swapMem.AllocatedBaseSize/1000
-        $usedSwap = $swapMem.CurrentUsage
-        $freeSwap = $totalSwap - $usedSwap
+  [CmdletBinding()]
+  param()
 
-        $MemPage = New-Object PSCustomObject -Property @{ 
-          "Total"=$totalMem;
-          "Used"=$usedMem;
-          "Free"=$freeMem;
-          "Cache"=$usedCache;
-          "Class"="RAM";
-        }
-        $SwapPage = New-Object PSCustomObject -Property @{ 
-          "Total"=$totalSwap;
-          "Used"=$usedSwap;
-          "Free"=$freeSwap;
-          "Class"="SWAP";
-        }
-        $MemPage | Select-Object Class, Total, Used, Free, Cache | Format-Table
-        $SwapPage | Select-Object Class, Total, Used, Free | Format-Table
+  # Get physical memory using CIM
+  $physicalMemory = Get-CimInstance Win32_ComputerSystem
+  $totalMem = [math]::round($physicalMemory.TotalPhysicalMemory / 1GB, 2)
+
+  # Get available memory using CIM
+  $availMem = Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty FreePhysicalMemory
+  $freeMem = [math]::round(($availMem / 1024) / 1024, 2)  # Convert from KB to GB
+  [int]$usedMem = $totalMem - $freeMem
+  
+
+  # Get page file (swap) information using CIM
+  $swapMem = Get-CimInstance Win32_PageFileUsage | Select-Object *
+  $totalSwap = [math]::round($swapMem.AllocatedBaseSize / 1024, 2)  # Convert to GB
+  $usedSwap = [math]::round($swapMem.CurrentUsage / 1024, 2)        # Convert to GB
+  $freeSwap = $totalSwap - $usedSwap
+
+  # Prepare output objects for Memory (RAM) and Swap (Pagefile)
+  $MemPage = New-Object PSCustomObject -Property @{
+      "Total" = $totalMem
+      "Used"  = [math]::max(0, $usedMem) # Ensure no negative values
+      "Free"  = [math]::max(0, $freeMem) # Ensure no negative values
+      "Class" = "RAM"
+  }
+
+  $SwapPage = New-Object PSCustomObject -Property @{
+      "Total" = $totalSwap
+      "Used"  = [math]::max(0, $usedSwap) # Ensure no negative values
+      "Free"  = [math]::max(0, $freeSwap) # Ensure no negative values
+      "Class" = "SWAP"
+  }
+
+  # Output results as tables
+  $MemPage | Select-Object Class, Total, Used, Free | Format-Table
+  $SwapPage | Select-Object Class, Total, Used, Free | Format-Table
 }

@@ -3,6 +3,7 @@ A smal collection of scripts i have used over time which can be nice to have in 
 
 TOP ONLY WORKS ON SYSTEMS WITH ENGLISH!!
 
+UPDATE: .. sadly my top and free functions does not work on PS Version 6+!
 
 ### Commands ###
 
